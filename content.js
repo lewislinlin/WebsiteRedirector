@@ -3,6 +3,9 @@ console.log('网站跳转器内容脚本已加载');
 
 let countdownInterval = null;
 let overlayDiv = null;
+let reminderDiv = null;
+let userPurpose = '';
+let isCountdownShowing = false; // 防止重复显示倒计时
 
 // 检查并显示倒计时
 async function checkAndShowCountdown() {
@@ -12,27 +15,35 @@ async function checkAndShowCountdown() {
     'pauseEndTime', 
     'redirectMode',
     'sourceSites',
-    'targetUrl'
+    'targetUrl',
+    'userPurpose'
   ]);
   
-  if (!settings.isEnabled) return;
+  userPurpose = settings.userPurpose || '';
+  
+  if (!settings.isEnabled) {
+    removeReminder();
+    return;
+  }
   
   // 检查是否暂停
   if (settings.isPaused && Date.now() < settings.pauseEndTime) {
+    removeReminder();
     return;
   }
   
   // 检查是否是源网站
   if (!isSourceSite(window.location.href, settings.sourceSites)) {
+    removeReminder();
     return;
   }
   
-  // 根据模式处理
-  if (settings.redirectMode === 'countdown') {
+  // 显示提醒
+  showReminder();
+  
+  // 根据模式处理（只有倒计时模式才显示倒计时弹窗，且只显示一次）
+  if (settings.redirectMode === 'countdown' && !isCountdownShowing) {
     showCountdown(settings.targetUrl);
-  } else if (settings.redirectMode === 'timer') {
-    // 计时模式 - 暂时不做什么，让用户使用一段时间
-    console.log('计时模式，将在一段时间后跳转');
   }
 }
 
@@ -51,12 +62,115 @@ function isSourceSite(url, sourceSites) {
   }
 }
 
+// 显示提醒浮窗
+function showReminder() {
+  if (reminderDiv) {
+    // 更新提醒内容
+    const reminderText = reminderDiv.querySelector('#reminder-text');
+    if (reminderText && userPurpose) {
+      reminderText.textContent = userPurpose;
+    }
+    return;
+  }
+  
+  // 创建提醒浮窗
+  reminderDiv = document.createElement('div');
+  reminderDiv.id = 'website-redirector-reminder';
+  reminderDiv.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 16px 20px;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+    z-index: 999999;
+    max-width: 300px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    cursor: move;
+    user-select: none;
+  `;
+  
+  reminderDiv.innerHTML = `
+    <div style="display: flex; align-items: flex-start; gap: 12px;">
+      <div style="font-size: 24px;">🎯</div>
+      <div style="flex: 1;">
+        <div style="font-size: 12px; opacity: 0.8; margin-bottom: 4px;">你的目的</div>
+        <div id="reminder-text" style="font-size: 16px; font-weight: 600; line-height: 1.4;">
+          ${userPurpose || '记得你的目的！'}
+        </div>
+      </div>
+      <button id="close-reminder" style="
+        background: none;
+        border: none;
+        color: white;
+        opacity: 0.6;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">×</button>
+    </div>
+  `;
+  
+  document.body.appendChild(reminderDiv);
+  
+  // 关闭按钮
+  const closeBtn = reminderDiv.querySelector('#close-reminder');
+  closeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    removeReminder();
+  });
+  
+  // 拖拽功能
+  let isDragging = false;
+  let offsetX, offsetY;
+  
+  reminderDiv.addEventListener('mousedown', (e) => {
+    if (e.target.id === 'close-reminder') return;
+    isDragging = true;
+    offsetX = e.clientX - reminderDiv.getBoundingClientRect().left;
+    offsetY = e.clientY - reminderDiv.getBoundingClientRect().top;
+    reminderDiv.style.cursor = 'grabbing';
+  });
+  
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const x = e.clientX - offsetX;
+    const y = e.clientY - offsetY;
+    reminderDiv.style.left = x + 'px';
+    reminderDiv.style.top = y + 'px';
+    reminderDiv.style.right = 'auto';
+  });
+  
+  document.addEventListener('mouseup', () => {
+    isDragging = false;
+    reminderDiv.style.cursor = 'move';
+  });
+}
+
+// 移除提醒浮窗
+function removeReminder() {
+  if (reminderDiv) {
+    reminderDiv.remove();
+    reminderDiv = null;
+  }
+}
+
 // 显示倒计时
 function showCountdown(targetUrl) {
   // 如果已有倒计时，先移除
   if (overlayDiv) {
-    overlayDiv.remove();
+    return;
   }
+  
+  // 标记倒计时正在显示
+  isCountdownShowing = true;
   
   // 创建倒计时遮罩
   overlayDiv = document.createElement('div');
@@ -71,12 +185,12 @@ function showCountdown(targetUrl) {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 999999;
+    z-index: 999998;
     color: white;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   `;
   
-  let countdown = 5;
+  let countdown = 15;
   
   overlayDiv.innerHTML = `
     <div style="text-align: center; max-width: 500px; padding: 20px;">
@@ -97,6 +211,7 @@ function showCountdown(targetUrl) {
           type="text" 
           id="confirm-input"
           placeholder="输入你的目的（例如：我要学习）"
+          value="${userPurpose}"
           style="
             width: 100%;
             padding: 12px 16px;
@@ -145,12 +260,23 @@ function showCountdown(targetUrl) {
     }
   }, 1000);
   
-  // 输入框变化检查
+  // 输入框 - 确保可以正常输入
   const confirmInput = document.getElementById('confirm-input');
   const cancelBtn = document.getElementById('cancel-btn');
   
+  // 让输入框自动获取焦点
+  setTimeout(() => {
+    confirmInput.focus();
+    confirmInput.select();
+  }, 100);
+  
+  // 输入框变化检查
   confirmInput.addEventListener('input', (e) => {
     const value = e.target.value.trim();
+    userPurpose = value;
+    // 保存到 storage
+    chrome.storage.local.set({ userPurpose: value });
+    
     if (value.length >= 3) {
       cancelBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
       cancelBtn.style.color = 'white';
@@ -180,6 +306,9 @@ function showCountdown(targetUrl) {
       overlayDiv.remove();
       overlayDiv = null;
     }
+    
+    // 显示提醒浮窗
+    showReminder();
   });
 }
 
@@ -196,6 +325,10 @@ new MutationObserver(() => {
   const url = location.href;
   if (url !== lastUrl) {
     lastUrl = url;
+    isCountdownShowing = false; // URL 变化时重置标记
     checkAndShowCountdown();
   }
 }).observe(document, { subtree: true, childList: true });
+
+// 定期检查（确保提醒一直显示）
+setInterval(checkAndShowCountdown, 1000);
