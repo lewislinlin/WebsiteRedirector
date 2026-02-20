@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>网站跳转器</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      width: 420px;
+      min-height: 500px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+    }
+    
+    .container {
+      padding: 20px;
+    }
+    
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 20px;
+    }
+    
+    .header h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+    
+    .header p {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #667eea;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .input-group {
+      margin-bottom: 12px;
+    }
+    
+    .input-group label {
+      display: block;
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 6px;
+    }
+    
+    .input-group input,
+    .input-group select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    
+    .input-group input:focus,
+    .input-group select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .site-list {
+      max-height: 120px;
+      overflow-y: auto;
+      margin-top: 8px;
+    }
+    
+    .site-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: #f5f5f5;
+      border-radius: 6px;
+      margin-bottom: 6px;
+      font-size: 13px;
+    }
+    
+    .site-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .site-remove {
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    
+    .add-btn {
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 8px;
+    }
+    
+    .preset-btn {
+      padding: 6px 12px;
+      background: #f0f0f0;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    
+    .preset-btn:hover {
+      background: #667eea;
+      color: white;
+    }
+    
+    .preset-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    
+    .toggle-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .toggle-switch {
+      position: relative;
+      width: 50px;
+      height: 26px;
+    }
+    
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.3s;
+      border-radius: 26px;
+    }
+    
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .toggle-slider {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    input:checked + .toggle-slider:before {
+      transform: translateX(24px);
+    }
+    
+    .pause-buttons {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    .pause-btn {
+      padding: 10px;
+      background: #f0f0f0;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: background 0.2s;
+    }
+    
+    .pause-btn:hover {
+      background: #e0e0e0;
+    }
+    
+    .resume-btn {
+      width: 100%;
+      padding: 12px;
+      background: #10b981;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      margin-top: 8px;
+    }
+    
+    .status-text {
+      text-align: center;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+    
+    .status-active {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    
+    .status-paused {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    
+    .status-inactive {
+      background: #f3f4f6;
+      color: #4b5563;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 20px;
+      color: #999;
+      font-size: 13px;
+    }
+    
+    .section-label {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 8px;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🌐 网站跳转器</h1>
+      <p>防止沉迷，专注当下</p>
+    </div>
+    
+    <div id="status-container" class="card">
+      <div id="status-text" class="status-text status-inactive">
+        状态: 未启用
+      </div>
+      <div class="toggle-container">
+        <span style="font-size: 14px; font-weight: 500;">启用跳转器</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="enable-toggle">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+    
+    <div id="pause-section" class="card" style="display: none;">
+      <div class="card-title">⏸️ 临时暂停</div>
+      <div class="pause-buttons">
+        <button class="pause-btn" data-duration="300000">5 分钟</button>
+        <button class="pause-btn" data-duration="900000">15 分钟</button>
+        <button class="pause-btn" data-duration="1800000">30 分钟</button>
+      </div>
+      <button id="resume-btn" class="resume-btn" style="display: none;">
+        ▶️ 立即恢复
+      </button>
+    </div>
+    
+    <div class="card">
+      <div class="card-title">🎯 目标网站</div>
+      <div class="input-group">
+        <label>跳转到</label>
+        <input type="url" id="target-url" placeholder="https://www.baidu.com">
+      </div>
+      <div class="section-label">💡 推荐目标网站</div>
+      <div class="preset-grid">
+        <button class="preset-btn" data-preset-target="https://www.icourse163.org/">中国大学MOOC</button>
+        <button class="preset-btn" data-preset-target="https://open.163.com/">网易公开课</button>
+        <button class="preset-btn" data-preset-target="https://www.khanacademy.org/">可汗学院</button>
+        <button class="preset-btn" data-preset-target="https://leetcode-cn.com/">力扣</button>
+        <button class="preset-btn" data-preset-target="https://weread.qq.com/">微信读书</button>
+        <button class="preset-btn" data-preset-target="https://www.runoob.com/">菜鸟教程</button>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-title">📱 源网站列表</div>
+      <div class="input-group">
+        <label>添加要限制的网站</label>
+        <input type="text" id="new-site" placeholder="例如: douyin.com, zhihu.com">
+      </div>
+      <button id="add-site-btn" class="add-btn">+ 添加网站</button>
+      
+      <div class="section-label">⚡ 一键添加推荐</div>
+      <div class="preset-grid">
+        <button class="preset-btn" data-preset-sites="douyin.com,kuaishou.com,xiaohongshu.com">短视频套餐</button>
+        <button class="preset-btn" data-preset-sites="zhihu.com,weibo.com,twitter.com">社交套餐</button>
+        <button class="preset-btn" data-preset-sites="bilibili.com">B站</button>
+        <button class="preset-btn" data-preset-sites="taobao.com,jd.com,pinduoduo.com">购物套餐</button>
+        <button class="preset-btn" data-preset-sites="zhihu.com">知乎</button>
+        <button class="preset-btn" data-preset-sites="weibo.com">微博</button>
+      </div>
+      
+      <div id="site-list" class="site-list">
+        <div class="empty-state">暂无源网站</div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-title">⚙️ 跳转模式</div>
+      <div class="input-group">
+        <select id="redirect-mode">
+          <option value="instant">立即跳转</option>
+          <option value="countdown">5 秒倒计时</option>
+          <option value="timer">计时模式（开发中）</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

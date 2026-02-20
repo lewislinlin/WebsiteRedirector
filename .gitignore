@@ -1,0 +1,22 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+dist/
+build/
+
+# Logs
+*.log
+
+# Personal guides (not for GitHub)
+GITHUB_UPLOAD.md
+TEST_GUIDE.md
+INSTALL_ANDROID_SDK.md
+WINDOWS_QUICKSTART.md
+BUILD.md
