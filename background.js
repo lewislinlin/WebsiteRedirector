@@ -11,7 +11,8 @@ const defaultSettings = {
   isPaused: false,
   dailyLimit: 0, // 0 表示无限制，单位分钟
   todayUsage: {}, // {date: '2024-01-01', usage: {site1: 10, site2: 20}}
-  redirectMode: 'instant' // 'instant' 立即跳转, 'timer' 计时模式, 'countdown' 倒计时模式
+  redirectMode: 'instant', // 'instant' 立即跳转, 'timer' 计时模式, 'countdown' 倒计时模式
+  userPurpose: '' // 用户设置的目的，用于提醒
 };
 
 // 初始化存储

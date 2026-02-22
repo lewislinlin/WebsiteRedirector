@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "网站跳转器",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "访问某些网站时自动跳转到目标网站，防止沉迷",
   "permissions": [
     "storage",

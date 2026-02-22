@@ -356,6 +356,30 @@
         </select>
       </div>
     </div>
+    
+    <div class="card">
+      <div class="card-title">💡 我的目的</div>
+      <div class="input-group">
+        <label>设置你的目的，提醒自己</label>
+        <input type="text" id="user-purpose" placeholder="例如：我要学习，不刷短视频">
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-title">📊 今日统计</div>
+      <div id="stats-container">
+        <div class="empty-state">暂无数据</div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-title">📦 数据管理</div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <button id="export-btn" class="preset-btn" style="width: 100%;">导出数据</button>
+        <button id="import-btn" class="preset-btn" style="width: 100%;">导入数据</button>
+      </div>
+      <input type="file" id="import-file" style="display: none;" accept=".json">
+    </div>
   </div>
   
   <script src="popup.js"></script>

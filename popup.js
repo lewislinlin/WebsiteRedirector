@@ -35,11 +35,49 @@ function renderSettings(settings) {
   // 跳转模式
   document.getElementById('redirect-mode').value = settings.redirectMode || 'instant';
   
+  // 用户目的
+  document.getElementById('user-purpose').value = settings.userPurpose || '';
+  
   // 源网站列表
   renderSiteList(settings.sourceSites || []);
   
+  // 渲染统计
+  renderStats(settings.todayUsage);
+  
   // 更新状态
   updateStatus(settings);
+}
+
+// 渲染统计
+function renderStats(todayUsage) {
+  const container = document.getElementById('stats-container');
+  
+  if (!todayUsage || !todayUsage.usage || Object.keys(todayUsage.usage).length === 0) {
+    container.innerHTML = '<div class="empty-state">今日还没有访问记录</div>';
+    return;
+  }
+  
+  const today = getTodayString();
+  if (todayUsage.date !== today) {
+    container.innerHTML = '<div class="empty-state">今日还没有访问记录</div>';
+    return;
+  }
+  
+  const entries = Object.entries(todayUsage.usage);
+  container.innerHTML = `
+    <div style="font-size: 12px; color: #666; margin-bottom: 8px;">今日访问次数</div>
+    ${entries.map(([site, count]) => `
+      <div class="site-item">
+        <span>${site}</span>
+        <span style="font-weight: 600; color: #667eea;">${count} 次</span>
+      </div>
+    `).join('')}
+  `;
+}
+
+// 获取今天日期字符串
+function getTodayString() {
+  return new Date().toISOString().split('T')[0];
 }
 
 // 渲染网站列表
@@ -120,6 +158,22 @@ function setupEventListeners() {
   document.getElementById('redirect-mode').addEventListener('change', async (e) => {
     await updateSettings({ redirectMode: e.target.value });
   });
+  
+  // 用户目的
+  document.getElementById('user-purpose').addEventListener('input', async (e) => {
+    await updateSettings({ userPurpose: e.target.value });
+  });
+  
+  // 导出按钮
+  document.getElementById('export-btn').addEventListener('click', exportData);
+  
+  // 导入按钮
+  document.getElementById('import-btn').addEventListener('click', () => {
+    document.getElementById('import-file').click();
+  });
+  
+  // 导入文件
+  document.getElementById('import-file').addEventListener('change', importData);
   
   // 添加网站
   document.getElementById('add-site-btn').addEventListener('click', addSite);
@@ -287,9 +341,56 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// 定期更新暂停时间显示
+// 导出数据
+async function exportData() {
+  const settings = await getSettings();
+  const dataStr = JSON.stringify(settings, null, 2);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `website-redirector-settings-${new Date().toISOString().split('T')[0]}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  
+  showToast('数据已导出');
+}
+
+// 导入数据
+async function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    
+    // 验证数据
+    if (!data || typeof data !== 'object') {
+      throw new Error('无效的数据格式');
+    }
+    
+    await updateSettings(data);
+    renderSettings(data);
+    showToast('数据已导入');
+  } catch (e) {
+    showToast('导入失败：' + e.message);
+  }
+  
+  // 清空文件输入
+  event.target.value = '';
+}
+
+// 定期更新暂停时间显示和统计
 setInterval(() => {
   if (currentSettings?.isPaused) {
     updatePauseDisplay();
   }
+  // 定期刷新统计
+  getSettings().then(settings => {
+    renderStats(settings.todayUsage);
+  });
 }, 1000);
