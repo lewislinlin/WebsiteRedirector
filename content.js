@@ -63,11 +63,32 @@ async function checkAndShowCountdown() {
 function isSourceSite(url, sourceSites) {
   try {
     const urlObj = new URL(url);
-    const hostname = urlObj.hostname.replace('www.', '');
+    const hostname = urlObj.hostname;
     
     return sourceSites.some(site => {
-      const siteHostname = site.replace('www.', '');
-      return hostname.includes(siteHostname) || siteHostname.includes(hostname);
+      // 清理用户输入的网站
+      let siteHostname = site.trim();
+      
+      // 如果用户输入的是完整 URL，提取 hostname
+      if (siteHostname.startsWith('http://') || siteHostname.startsWith('https://')) {
+        try {
+          siteHostname = new URL(siteHostname).hostname;
+        } catch (e) {
+          // 如果解析失败，继续使用原始输入
+        }
+      }
+      
+      // 移除 www. 前缀进行比较
+      const cleanHostname = hostname.replace(/^www\./, '');
+      const cleanSiteHostname = siteHostname.replace(/^www\./, '');
+      
+      // 精确匹配或子域名匹配
+      // 例如：hostname = "www.douyin.com", site = "douyin.com" → 匹配
+      // 例如：hostname = "m.douyin.com", site = "douyin.com" → 匹配
+      // 例如：hostname = "douyin.com", site = "www.douyin.com" → 匹配
+      // 例如：hostname = "other.com", site = "douyin.com" → 不匹配
+      return cleanHostname === cleanSiteHostname || 
+             cleanHostname.endsWith('.' + cleanSiteHostname);
     });
   } catch (e) {
     return false;
